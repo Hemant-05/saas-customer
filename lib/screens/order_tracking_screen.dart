@@ -194,21 +194,43 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                           const Icon(Icons.restaurant_rounded,
                               color: Color(0xFFFF6B35), size: 32),
                           const SizedBox(height: 8),
-                          Text(
-                            _bill!.orderNumber,
-                            style: const TextStyle(
-                              color: Color(0xFFFF6B35),
-                              fontSize: 22,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 1,
+                          if (_bill!.businessType == 'food_truck') ...[
+                            const SizedBox(height: 12),
+                            const Text(
+                              'YOUR PICKUP NO.',
+                              style: TextStyle(
+                                color: Colors.white54,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 1.5,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Table ${_bill!.tableNumber} — ${_bill!.tableName}',
-                            style: const TextStyle(
-                                color: Colors.white60, fontSize: 14),
-                          ),
+                            Text(
+                              _bill!.orderPickupNumber?.toString() ?? '--',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 56,
+                                fontWeight: FontWeight.w900,
+                                height: 1.1,
+                              ),
+                            ),
+                          ] else ...[
+                            Text(
+                              _bill!.orderNumber,
+                              style: const TextStyle(
+                                color: Color(0xFFFF6B35),
+                                fontSize: 22,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 1,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Table ${_bill!.tableNumber} — ${_bill!.tableName}',
+                              style: const TextStyle(
+                                  color: Colors.white60, fontSize: 14),
+                            ),
+                          ],
                         ],
                       ),
                     ),

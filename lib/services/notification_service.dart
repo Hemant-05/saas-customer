@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -50,6 +50,10 @@ class CustomerNotificationService {
   // ─── Initialization ────────────────────────────────────────────────────────
 
   Future<void> initialize() async {
+    if (kIsWeb) {
+      debugPrint('[CustomerNotificationService] Bypassing FCM init on Web');
+      return;
+    }
     try {
       FirebaseMessaging.onBackgroundMessage(
           _firebaseMessagingBackgroundHandler);
@@ -180,6 +184,7 @@ class CustomerNotificationService {
   /// Call this after a customer places an order to link their FCM token
   /// to the orderId so they receive status updates for that order.
   Future<void> registerTokenForOrder(String orderId) async {
+    if (kIsWeb) return;
     try {
       final fcmToken = await FirebaseMessaging.instance.getToken();
       if (fcmToken == null) return;

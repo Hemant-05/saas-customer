@@ -1,16 +1,19 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 
 class CustomerApiService {
+  static const Duration _timeout = Duration(seconds: 10);
+
   static Future<Map<String, dynamic>> get(String url) async {
     try {
-      final response = await http
-          .get(Uri.parse(url))
-          .timeout(const Duration(seconds: 30));
+      final response = await http.get(Uri.parse(url)).timeout(_timeout);
       return _parse(response);
+    } on TimeoutException {
+      throw CustomerApiException('Connection unavailable', 0);
     } on SocketException {
-      throw CustomerApiException('No internet connection', 0);
+      throw CustomerApiException('Connection unavailable', 0);
     } on CustomerApiException {
       rethrow;
     } catch (e) {
@@ -27,10 +30,12 @@ class CustomerApiService {
             headers: {'Content-Type': 'application/json'},
             body: jsonEncode(body),
           )
-          .timeout(const Duration(seconds: 30));
+          .timeout(_timeout);
       return _parse(response);
+    } on TimeoutException {
+      throw CustomerApiException('Connection unavailable', 0);
     } on SocketException {
-      throw CustomerApiException('No internet connection', 0);
+      throw CustomerApiException('Connection unavailable', 0);
     } on CustomerApiException {
       rethrow;
     } catch (e) {
@@ -45,7 +50,8 @@ class CustomerApiService {
         return body;
       } else {
         throw CustomerApiException(
-            body['message'] ?? 'Server error', response.statusCode, data: body);
+            body['message'] ?? 'Server error', response.statusCode,
+            data: body);
       }
     } on CustomerApiException {
       rethrow;
@@ -61,4 +67,6 @@ class CustomerApiException implements Exception {
   final int statusCode;
   final dynamic data;
   CustomerApiException(this.message, this.statusCode, {this.data});
+
+  bool get isNetworkError => statusCode == 0;
 }

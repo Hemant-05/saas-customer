@@ -6,16 +6,16 @@ import 'checkout_screen.dart';
 
 class CartScreen extends StatelessWidget {
   final String restaurantId;
-  final String tableId;
+  final String? tableId;
   final RestaurantInfo restaurantInfo;
-  final TableInfo tableInfo;
+  final TableInfo? tableInfo;
 
   const CartScreen({
     super.key,
     required this.restaurantId,
-    required this.tableId,
+    this.tableId,
     required this.restaurantInfo,
-    required this.tableInfo,
+    this.tableInfo,
   });
 
   @override

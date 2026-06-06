@@ -7,16 +7,16 @@ import 'order_tracking_screen.dart';
 
 class CheckoutScreen extends StatefulWidget {
   final String restaurantId;
-  final String tableId;
+  final String? tableId;
   final RestaurantInfo restaurantInfo;
-  final TableInfo tableInfo;
+  final TableInfo? tableInfo;
 
   const CheckoutScreen({
     super.key,
     required this.restaurantId,
-    required this.tableId,
+    this.tableId,
     required this.restaurantInfo,
-    required this.tableInfo,
+    this.tableInfo,
   });
 
   @override
@@ -87,8 +87,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final orderData = await orderProv.placeOrder(
       restaurantId: widget.restaurantId,
       tableId: widget.tableId,
-      tableNumber: widget.tableInfo.tableNumber,
-      tableName: widget.tableInfo.tableName,
+      tableNumber: widget.tableInfo?.tableNumber,
+      tableName: widget.tableInfo?.tableName,
       items: cart.items.map((ci) => ci.toOrderItem()).toList(),
       paymentMethod: _selectedPaymentMethod,
     );

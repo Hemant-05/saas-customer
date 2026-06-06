@@ -8,12 +8,12 @@ import 'cart_screen.dart';
 
 class MenuScreen extends StatefulWidget {
   final String restaurantId;
-  final String tableId;
+  final String? tableId;
 
   const MenuScreen({
     super.key,
     required this.restaurantId,
-    required this.tableId,
+    this.tableId,
   });
 
   @override
@@ -29,9 +29,15 @@ class _MenuScreenState extends State<MenuScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context
-          .read<CustomerMenuProvider>()
-          .fetchMenu(widget.restaurantId, widget.tableId);
+      if (widget.tableId != null) {
+        context
+            .read<CustomerMenuProvider>()
+            .fetchMenu(widget.restaurantId, widget.tableId!);
+      } else {
+        context
+            .read<CustomerMenuProvider>()
+            .fetchTruckMenu(widget.restaurantId);
+      }
     });
   }
 
@@ -67,14 +73,16 @@ class _MenuScreenState extends State<MenuScreen> {
             );
           }
           if (menuProv.errorMessage != null) {
-            final isNotServiceable = menuProv.errorMessage!.toLowerCase().contains('serviceable');
+            final isNotServiceable =
+                menuProv.errorMessage!.toLowerCase().contains('serviceable');
             return Scaffold(
               backgroundColor: const Color(0xFF0A0A14),
               appBar: AppBar(
                 backgroundColor: Colors.transparent,
                 elevation: 0,
                 leading: IconButton(
-                  icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+                  icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                      color: Colors.white),
                   onPressed: () => Navigator.pop(context),
                 ),
               ),
@@ -85,7 +93,9 @@ class _MenuScreenState extends State<MenuScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
-                        isNotServiceable ? Icons.table_restaurant_rounded : Icons.error_outline_rounded,
+                        isNotServiceable
+                            ? Icons.table_restaurant_rounded
+                            : Icons.error_outline_rounded,
                         size: 48,
                         color: const Color(0xFFFF4757),
                       ),
@@ -100,7 +110,9 @@ class _MenuScreenState extends State<MenuScreen> {
                         ),
                       ),
                       const SizedBox(height: 24),
-                      if (isNotServiceable && menuProv.availableTables != null && menuProv.availableTables!.isNotEmpty) ...[
+                      if (isNotServiceable &&
+                          menuProv.availableTables != null &&
+                          menuProv.availableTables!.isNotEmpty) ...[
                         Text(
                           'Available Tables:',
                           style: TextStyle(
@@ -116,11 +128,15 @@ class _MenuScreenState extends State<MenuScreen> {
                           alignment: WrapAlignment.center,
                           children: menuProv.availableTables!.map<Widget>((t) {
                             return Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 8),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF06D6A0).withOpacity(0.15),
+                                color:
+                                    const Color(0xFF06D6A0).withOpacity(0.15),
                                 borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: const Color(0xFF06D6A0).withOpacity(0.3)),
+                                border: Border.all(
+                                    color: const Color(0xFF06D6A0)
+                                        .withOpacity(0.3)),
                               ),
                               child: Text(
                                 '${t['tableName'] ?? 'Table ${t['tableNumber']}'}',
@@ -134,9 +150,17 @@ class _MenuScreenState extends State<MenuScreen> {
                         ),
                       ] else ...[
                         ElevatedButton(
-                          onPressed: () => menuProv.fetchMenu(widget.restaurantId, widget.tableId),
-                          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFF6B35)),
-                          child: const Text('Retry', style: TextStyle(color: Colors.white)),
+                          onPressed: () {
+                            if (widget.tableId != null) {
+                              menuProv.fetchMenu(widget.restaurantId, widget.tableId!);
+                            } else {
+                              menuProv.fetchTruckMenu(widget.restaurantId);
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFFF6B35)),
+                          child: const Text('Retry',
+                              style: TextStyle(color: Colors.white)),
                         ),
                       ],
                     ],
@@ -218,13 +242,14 @@ class _MenuScreenState extends State<MenuScreen> {
                                         fontSize: 18,
                                       ),
                                     ),
-                                    Text(
-                                      'Table ${menuProv.tableInfo?.tableNumber ?? ''} — ${menuProv.tableInfo?.tableName ?? ''}',
-                                      style: TextStyle(
-                                        color: Colors.white.withOpacity(0.5),
-                                        fontSize: 12,
+                                    if (menuProv.tableInfo != null)
+                                      Text(
+                                        'Table ${menuProv.tableInfo?.tableNumber ?? ''} — ${menuProv.tableInfo?.tableName ?? ''}',
+                                        style: TextStyle(
+                                          color: Colors.white.withOpacity(0.5),
+                                          fontSize: 12,
+                                        ),
                                       ),
-                                    ),
                                   ],
                                 ),
                               ),
@@ -283,6 +308,44 @@ class _MenuScreenState extends State<MenuScreen> {
                       ),
                     ),
                   ),
+                  if (menuProv.isOfflineMode)
+                    SliverToBoxAdapter(
+                      child: Container(
+                        margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFB020).withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: const Color(0xFFFFB020).withOpacity(0.25),
+                          ),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(
+                              Icons.cloud_off_rounded,
+                              color: Color(0xFFFFB020),
+                              size: 18,
+                            ),
+                            SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Showing saved menu',
+                                style: TextStyle(
+                                  color: Color(0xFFFFB020),
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 12,
+                                  height: 1.2,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   // Menu items
                   SliverPadding(
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 120),
@@ -324,7 +387,7 @@ class _MenuScreenState extends State<MenuScreen> {
                                 restaurantId: widget.restaurantId,
                                 tableId: widget.tableId,
                                 restaurantInfo: menuProv.restaurantInfo!,
-                                tableInfo: menuProv.tableInfo!,
+                                tableInfo: menuProv.tableInfo,
                               ),
                             ),
                           ),
@@ -401,13 +464,15 @@ class _MenuScreenState extends State<MenuScreen> {
                   builder: (context, provider, child) {
                     if (provider.placedOrderId != null) {
                       return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 8),
                         child: InkWell(
                           onTap: () {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => OrderTrackingScreen(orderId: provider.placedOrderId!),
+                                builder: (_) => OrderTrackingScreen(
+                                    orderId: provider.placedOrderId!),
                               ),
                             );
                           },
@@ -416,23 +481,34 @@ class _MenuScreenState extends State<MenuScreen> {
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
                               color: const Color(0xFF06D6A0).withOpacity(0.1),
-                              border: Border.all(color: const Color(0xFF06D6A0).withOpacity(0.4)),
+                              border: Border.all(
+                                  color:
+                                      const Color(0xFF06D6A0).withOpacity(0.4)),
                               borderRadius: BorderRadius.circular(16),
                             ),
                             child: const Row(
                               children: [
-                                Icon(Icons.receipt_long_rounded, color: Color(0xFF06D6A0)),
+                                Icon(Icons.receipt_long_rounded,
+                                    color: Color(0xFF06D6A0)),
                                 SizedBox(width: 12),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
-                                      Text('Active Order Found', style: TextStyle(color: Color(0xFF06D6A0), fontWeight: FontWeight.w700)),
-                                      Text('Tap to track your order or pay', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                                      Text('Active Order Found',
+                                          style: TextStyle(
+                                              color: Color(0xFF06D6A0),
+                                              fontWeight: FontWeight.w700)),
+                                      Text('Tap to track your order or pay',
+                                          style: TextStyle(
+                                              color: Colors.white70,
+                                              fontSize: 12)),
                                     ],
                                   ),
                                 ),
-                                Icon(Icons.arrow_forward_ios_rounded, color: Color(0xFF06D6A0), size: 16),
+                                Icon(Icons.arrow_forward_ios_rounded,
+                                    color: Color(0xFF06D6A0), size: 16),
                               ],
                             ),
                           ),

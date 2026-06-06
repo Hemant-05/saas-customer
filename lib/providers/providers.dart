@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import '../models/models.dart';
 import '../services/api_service.dart';
+import '../services/offline_cache_service.dart';
 import '../services/notification_service.dart';
 import '../config/api_config.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uuid/uuid.dart';
 
 class CustomerMenuProvider extends ChangeNotifier {
   RestaurantInfo? restaurantInfo;
@@ -11,40 +13,133 @@ class CustomerMenuProvider extends ChangeNotifier {
   Map<String, List<MenuItemModel>> menuByCategory = {};
   List<String> categories = [];
   bool isLoading = false;
+  bool isOfflineMode = false;
   String? errorMessage;
   List<dynamic>? availableTables;
+  DateTime? lastUpdatedAt;
 
   Future<void> fetchMenu(String restaurantId, String tableId) async {
-    isLoading = true;
+    if (menuByCategory.isEmpty) {
+      final restored = await _restoreMenuFromCache(restaurantId, tableId);
+      if (restored) notifyListeners();
+    }
+
+    final hasSavedData = menuByCategory.isNotEmpty;
+    isLoading = !hasSavedData;
     errorMessage = null;
     notifyListeners();
     try {
       final response = await CustomerApiService.get(
         CustomerApiConfig.publicMenu(restaurantId, tableId),
       );
-      final data = response['data'];
-      restaurantInfo = RestaurantInfo.fromJson(data['restaurantInfo']);
-      tableInfo = TableInfo.fromJson(data['tableInfo']);
-
-      menuByCategory = {};
-      final menuData = data['menu'] as Map<String, dynamic>? ?? {};
-      menuData.forEach((cat, items) {
-        menuByCategory[cat] = (items as List)
-            .map((i) => MenuItemModel.fromJson(i))
-            .toList();
-      });
-      // Derive categories from the map keys (preserving order from API)
-      categories = menuByCategory.keys.toList();
+      final data = Map<String, dynamic>.from(response['data']);
+      _applyMenuData(data);
+      isOfflineMode = false;
+      lastUpdatedAt = DateTime.now();
+      await _cacheMenu(restaurantId, tableId, data);
     } on CustomerApiException catch (e) {
-      errorMessage = e.message;
+      if (e.isNetworkError && hasSavedData) {
+        isOfflineMode = true;
+        errorMessage = null;
+      } else {
+        errorMessage = e.isNetworkError
+            ? 'Menu is not available yet. Please ask staff to reconnect once.'
+            : e.message;
+      }
       if (e.data != null && e.data['availableTables'] != null) {
         availableTables = e.data['availableTables'];
       }
     } catch (e) {
-      errorMessage = 'Failed to load menu: ${e.toString()}';
+      if (hasSavedData) {
+        isOfflineMode = true;
+        errorMessage = null;
+      } else {
+        errorMessage = 'Menu is not available yet. Please try again.';
+      }
     }
     isLoading = false;
     notifyListeners();
+  }
+
+  Future<void> fetchTruckMenu(String restaurantId) async {
+    if (menuByCategory.isEmpty) {
+      final restored = await _restoreMenuFromCache(restaurantId, 'truck');
+      if (restored) notifyListeners();
+    }
+
+    final hasSavedData = menuByCategory.isNotEmpty;
+    isLoading = !hasSavedData;
+    errorMessage = null;
+    notifyListeners();
+    try {
+      final response = await CustomerApiService.get(
+        CustomerApiConfig.publicTruckMenu(restaurantId),
+      );
+      final data = Map<String, dynamic>.from(response['data']);
+      _applyMenuData(data);
+      isOfflineMode = false;
+      lastUpdatedAt = DateTime.now();
+      await _cacheMenu(restaurantId, 'truck', data);
+    } on CustomerApiException catch (e) {
+      if (e.isNetworkError && hasSavedData) {
+        isOfflineMode = true;
+        errorMessage = null;
+      } else {
+        errorMessage = e.message;
+      }
+    } catch (e) {
+      if (hasSavedData) {
+        isOfflineMode = true;
+        errorMessage = null;
+      } else {
+        errorMessage = 'Menu is not available yet. Please try again.';
+      }
+    }
+    isLoading = false;
+    notifyListeners();
+  }
+
+  void _applyMenuData(Map<String, dynamic> data) {
+    restaurantInfo = RestaurantInfo.fromJson(data['restaurantInfo']);
+    if (data['tableInfo'] != null) {
+      tableInfo = TableInfo.fromJson(data['tableInfo']);
+    } else {
+      tableInfo = null; // Important for food truck mode
+    }
+
+    menuByCategory = {};
+    final menuData = data['menu'] as Map<String, dynamic>? ?? {};
+    menuData.forEach((cat, items) {
+      menuByCategory[cat] =
+          (items as List).map((i) => MenuItemModel.fromJson(i)).toList();
+    });
+    categories = menuByCategory.keys.toList();
+  }
+
+  Future<void> _cacheMenu(
+    String restaurantId,
+    String tableId,
+    Map<String, dynamic> data,
+  ) {
+    return CustomerOfflineCacheService.writeJson(
+      _menuCacheKey(restaurantId, tableId),
+      data,
+    );
+  }
+
+  Future<bool> _restoreMenuFromCache(
+      String restaurantId, String tableId) async {
+    final cached = await CustomerOfflineCacheService.readJsonMap(
+      _menuCacheKey(restaurantId, tableId),
+    );
+    if (cached == null) return false;
+    _applyMenuData(cached);
+    isOfflineMode = true;
+    return menuByCategory.isNotEmpty;
+  }
+
+  String _menuCacheKey(String restaurantId, String tableId) {
+    return 'menu_${restaurantId}_$tableId';
   }
 }
 
@@ -55,7 +150,8 @@ class CartProvider extends ChangeNotifier {
   int get totalItems => _items.fold(0, (sum, i) => sum + i.quantity);
   double get subtotal => _items.fold(0, (sum, i) => sum + i.subtotal);
   double get taxAmount => double.parse((subtotal * 0.05).toStringAsFixed(2));
-  double get totalAmount => double.parse((subtotal + taxAmount).toStringAsFixed(2));
+  double get totalAmount =>
+      double.parse((subtotal + taxAmount).toStringAsFixed(2));
 
   bool hasItem(String itemId) => _items.any((i) => i.item.id == itemId);
   int quantityOf(String itemId) {
@@ -120,8 +216,21 @@ class CustomerOrderProvider extends ChangeNotifier {
   bool isLoading = false;
   String? errorMessage;
 
+  String? customerSessionId;
+
   CustomerOrderProvider() {
+    _initSession();
     _loadPersistedOrder();
+  }
+
+  Future<void> _initSession() async {
+    final prefs = await SharedPreferences.getInstance();
+    customerSessionId = prefs.getString('customerSessionId');
+    if (customerSessionId == null) {
+      customerSessionId = const Uuid().v4();
+      await prefs.setString('customerSessionId', customerSessionId!);
+    }
+    notifyListeners();
   }
 
   Future<void> _loadPersistedOrder() async {
@@ -144,9 +253,9 @@ class CustomerOrderProvider extends ChangeNotifier {
 
   Future<Map<String, dynamic>?> placeOrder({
     required String restaurantId,
-    required String tableId,
-    required int tableNumber,
-    required String tableName,
+    String? tableId,
+    int? tableNumber,
+    String? tableName,
     required List<Map<String, dynamic>> items,
     required String paymentMethod,
   }) async {
@@ -163,6 +272,7 @@ class CustomerOrderProvider extends ChangeNotifier {
           'tableName': tableName,
           'items': items,
           'paymentMethod': paymentMethod,
+          'customerSessionId': customerSessionId,
         },
       );
       final data = response['data'];
@@ -177,7 +287,8 @@ class CustomerOrderProvider extends ChangeNotifier {
       notifyListeners();
       return data;
     } on CustomerApiException catch (e) {
-      errorMessage = e.message;
+      errorMessage =
+          e.isNetworkError ? 'Please reconnect to place the order.' : e.message;
       isLoading = false;
       notifyListeners();
       return null;
@@ -225,7 +336,8 @@ class CustomerOrderProvider extends ChangeNotifier {
 
   Future<OrderBill?> pollBill(String orderId) async {
     try {
-      final response = await CustomerApiService.get(CustomerApiConfig.bill(orderId));
+      final response =
+          await CustomerApiService.get(CustomerApiConfig.bill(orderId));
       final data = response['data'];
       currentBill = OrderBill.fromJson(data['bill'], data['orderStatus']);
       notifyListeners();

@@ -16,6 +16,12 @@ class RestaurantInfo {
       logoUrl: json['logoUrl'],
     );
   }
+
+  Map<String, dynamic> toJson() => {
+        'restaurantId': restaurantId,
+        'name': name,
+        'logoUrl': logoUrl,
+      };
 }
 
 class TableInfo {
@@ -36,6 +42,12 @@ class TableInfo {
       tableName: json['tableName'] ?? '',
     );
   }
+
+  Map<String, dynamic> toJson() => {
+        'tableId': tableId,
+        'tableNumber': tableNumber,
+        'tableName': tableName,
+      };
 }
 
 class MenuItemModel {
@@ -71,6 +83,17 @@ class MenuItemModel {
       isVeg: json['isVeg'] ?? true,
     );
   }
+
+  Map<String, dynamic> toJson() => {
+        '_id': id,
+        'name': name,
+        'description': description,
+        'price': price,
+        'category': category,
+        'imageUrl': imageUrl,
+        'isAvailable': isAvailable,
+        'isVeg': isVeg,
+      };
 }
 
 class CartItem {
@@ -119,6 +142,14 @@ class BillItem {
       customization: json['customization'] ?? '',
     );
   }
+
+  Map<String, dynamic> toJson() => {
+        'name': name,
+        'price': price,
+        'quantity': quantity,
+        'subtotal': subtotal,
+        'customization': customization,
+      };
 }
 
 class OrderBill {
@@ -137,6 +168,8 @@ class OrderBill {
   final String paymentMethod;
   final String paymentStatus;
   final String? orderStatus;
+  final String? businessType;
+  final int? orderPickupNumber;
 
   const OrderBill({
     required this.id,
@@ -154,9 +187,12 @@ class OrderBill {
     required this.paymentMethod,
     required this.paymentStatus,
     this.orderStatus,
+    this.businessType,
+    this.orderPickupNumber,
   });
 
-  factory OrderBill.fromJson(Map<String, dynamic> billJson, String? orderStatus) {
+  factory OrderBill.fromJson(
+      Map<String, dynamic> billJson, String? orderStatus) {
     return OrderBill(
       id: billJson['_id'] ?? '',
       orderId: billJson['orderId'] ?? '',
@@ -176,6 +212,26 @@ class OrderBill {
       paymentMethod: billJson['paymentMethod'] ?? 'cash',
       paymentStatus: billJson['paymentStatus'] ?? 'pending',
       orderStatus: orderStatus,
+      businessType: billJson['businessType'],
+      orderPickupNumber: (billJson['orderPickupNumber'] as num?)?.toInt(),
     );
   }
+
+  Map<String, dynamic> toJson() => {
+        '_id': id,
+        'orderId': orderId,
+        'restaurantName': restaurantName,
+        'restaurantLogoUrl': restaurantLogoUrl,
+        'tableNumber': tableNumber,
+        'tableName': tableName,
+        'orderNumber': orderNumber,
+        'items': items.map((item) => item.toJson()).toList(),
+        'subtotal': subtotal,
+        'taxPercent': taxPercent,
+        'taxAmount': taxAmount,
+        'totalAmount': totalAmount,
+        'paymentMethod': paymentMethod,
+        'paymentStatus': paymentStatus,
+        'orderStatus': orderStatus,
+      };
 }

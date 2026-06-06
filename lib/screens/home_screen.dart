@@ -1,9 +1,12 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:provider/provider.dart';
 import '../providers/providers.dart';
+import 'package:go_router/go_router.dart';
 import 'menu_screen.dart';
 import 'order_tracking_screen.dart';
+import 'order_history_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -15,6 +18,11 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final _urlController = TextEditingController();
   bool _scannerOpen = false;
+
+  @override
+  void initState() {
+    super.initState();
+  }
 
   @override
   void dispose() {
@@ -33,34 +41,55 @@ class _HomeScreenState extends State<HomeScreen> {
       );
       return;
     }
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => MenuScreen(
-          restaurantId: parsed['restaurantId']!,
-          tableId: parsed['tableId']!,
-        ),
-      ),
-    );
+    if (parsed['tableId'] != null) {
+      context.go('/menu/${parsed['restaurantId']}/${parsed['tableId']}');
+    } else {
+      context.go('/menu/${parsed['restaurantId']}');
+    }
   }
 
   Map<String, String>? _parseQrUrl(String url) {
-    // Expected: https://domain.com/menu/{restaurantId}/{tableId}
+    // Expected formats: 
+    // Cafe: https://domain.com/menu/{restaurantId}/{tableId}
+    // Truck: https://domain.com/truck/{restaurantId}
     final uri = Uri.tryParse(url);
     if (uri == null) return null;
     final segments = uri.pathSegments;
+
     final menuIdx = segments.indexOf('menu');
-    if (menuIdx == -1 || segments.length < menuIdx + 3) return null;
-    return {
-      'restaurantId': segments[menuIdx + 1],
-      'tableId': segments[menuIdx + 2],
-    };
+    if (menuIdx != -1 && segments.length >= menuIdx + 3) {
+      return {
+        'restaurantId': segments[menuIdx + 1],
+        'tableId': segments[menuIdx + 2],
+      };
+    }
+
+    final truckIdx = segments.indexOf('truck');
+    if (truckIdx != -1 && segments.length >= truckIdx + 2) {
+      return {
+        'restaurantId': segments[truckIdx + 1],
+      };
+    }
+
+    return null;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF0A0A14),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.history_rounded, color: Colors.white),
+            onPressed: () {
+              context.go('/history');
+            },
+          ),
+        ],
+      ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(28),
@@ -111,72 +140,74 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               const SizedBox(height: 48),
-              // Scan button
-              if (!_scannerOpen) ...[
-                SizedBox(
-                  width: double.infinity,
-                  height: 60,
-                  child: ElevatedButton.icon(
-                    onPressed: () => setState(() => _scannerOpen = true),
-                    icon: const Icon(Icons.qr_code_scanner_rounded, size: 24),
-                    label: const Text(
-                      'Scan QR Code',
-                      style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFF6B35),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(18),
+              // Scan button (hidden on web)
+              if (!kIsWeb) ...[
+                if (!_scannerOpen) ...[
+                  SizedBox(
+                    width: double.infinity,
+                    height: 60,
+                    child: ElevatedButton.icon(
+                      onPressed: () => setState(() => _scannerOpen = true),
+                      icon: const Icon(Icons.qr_code_scanner_rounded, size: 24),
+                      label: const Text(
+                        'Scan QR Code',
+                        style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
                       ),
-                      elevation: 0,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFFF6B35),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                        elevation: 0,
+                      ),
                     ),
                   ),
-                ),
-              ] else ...[
-                // QR Scanner
-                Container(
-                  height: 260,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: const Color(0xFFFF6B35), width: 2),
-                  ),
-                  clipBehavior: Clip.antiAlias,
-                  child: MobileScanner(
-                    onDetect: (capture) {
-                      final barcode = capture.barcodes.firstOrNull;
-                      if (barcode?.rawValue != null) {
-                        setState(() => _scannerOpen = false);
-                        _navigateToMenu(barcode!.rawValue!);
-                      }
-                    },
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextButton(
-                  onPressed: () => setState(() => _scannerOpen = false),
-                  child: const Text('Cancel',
-                      style: TextStyle(color: Colors.white54)),
-                ),
-              ],
-              const SizedBox(height: 24),
-              // Divider
-              Row(
-                children: [
-                  Expanded(child: Divider(color: Colors.white.withOpacity(0.08))),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Text(
-                      'or paste URL',
-                      style: TextStyle(
-                          color: Colors.white.withOpacity(0.3), fontSize: 12),
+                ] else ...[
+                  // QR Scanner
+                  Container(
+                    height: 260,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: const Color(0xFFFF6B35), width: 2),
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: MobileScanner(
+                      onDetect: (capture) {
+                        final barcode = capture.barcodes.firstOrNull;
+                        if (barcode?.rawValue != null) {
+                          setState(() => _scannerOpen = false);
+                          _navigateToMenu(barcode!.rawValue!);
+                        }
+                      },
                     ),
                   ),
-                  Expanded(child: Divider(color: Colors.white.withOpacity(0.08))),
+                  const SizedBox(height: 12),
+                  TextButton(
+                    onPressed: () => setState(() => _scannerOpen = false),
+                    child: const Text('Cancel',
+                        style: TextStyle(color: Colors.white54)),
+                  ),
                 ],
-              ),
-              const SizedBox(height: 20),
-              // Manual URL input (for prototype testing)
+                const SizedBox(height: 24),
+                // Divider
+                Row(
+                  children: [
+                    Expanded(child: Divider(color: Colors.white.withOpacity(0.08))),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Text(
+                        'or paste URL',
+                        style: TextStyle(
+                            color: Colors.white.withOpacity(0.3), fontSize: 12),
+                      ),
+                    ),
+                    Expanded(child: Divider(color: Colors.white.withOpacity(0.08))),
+                  ],
+                ),
+                const SizedBox(height: 20),
+              ],
+              // Manual URL input (for prototype testing and web fallback)
               TextField(
                 controller: _urlController,
                 style: const TextStyle(color: Colors.white),
@@ -215,12 +246,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       padding: const EdgeInsets.only(top: 20),
                       child: InkWell(
                         onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => OrderTrackingScreen(orderId: provider.placedOrderId!),
-                            ),
-                          );
+                          context.go('/orders/${provider.placedOrderId!}');
                         },
                         borderRadius: BorderRadius.circular(16),
                         child: Container(
