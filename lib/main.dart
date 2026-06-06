@@ -10,6 +10,8 @@ import 'screens/menu_screen.dart';
 import 'screens/order_tracking_screen.dart';
 import 'screens/order_history_screen.dart';
 import 'services/notification_service.dart';
+import 'providers/theme_provider.dart';
+import 'theme/app_theme.dart';
 
 final GoRouter _router = GoRouter(
   initialLocation: '/',
@@ -75,37 +77,19 @@ class QRCafeCustomerApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => CustomerMenuProvider()),
         ChangeNotifierProvider(create: (_) => CartProvider()),
         ChangeNotifierProvider(create: (_) => CustomerOrderProvider()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
       ],
-      child: MaterialApp.router(
-        title: 'QR Cafe',
-        debugShowCheckedModeBanner: false,
-        routerConfig: _router,
-        theme: ThemeData(
-          useMaterial3: true,
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: const Color(0xFFFF6B35),
-            brightness: Brightness.dark,
-          ),
-          scaffoldBackgroundColor: const Color(0xFF0A0A14),
-          fontFamily: 'Roboto',
-          appBarTheme: const AppBarTheme(
-            backgroundColor: Color(0xFF12121F),
-            surfaceTintColor: Colors.transparent,
-            elevation: 0,
-            titleTextStyle: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w700,
-              fontSize: 18,
-            ),
-          ),
-          snackBarTheme: SnackBarThemeData(
-            backgroundColor: const Color(0xFF1A1A2E),
-            contentTextStyle: const TextStyle(color: Colors.white),
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            behavior: SnackBarBehavior.floating,
-          ),
-        ),
+      child: Consumer<ThemeProvider>(
+        builder: (context, themeProvider, child) {
+          return MaterialApp.router(
+            title: 'QR Cafe',
+            debugShowCheckedModeBanner: false,
+            routerConfig: _router,
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: themeProvider.themeMode,
+          );
+        },
       ),
     );
   }

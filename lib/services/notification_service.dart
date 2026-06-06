@@ -137,15 +137,21 @@ class CustomerNotificationService {
     });
 
     // Terminated tap
-    FirebaseMessaging.instance.getInitialMessage().then((message) {
-      if (message != null) {
-        Future.delayed(const Duration(milliseconds: 500), () {
-          final type = message.data['type'] ?? '';
-          onNotificationTap?.call(
-              type, Map<String, String>.from(message.data));
+    try {
+      if (!kIsWeb) {
+        FirebaseMessaging.instance.getInitialMessage().then((message) {
+          if (message != null) {
+            Future.delayed(const Duration(milliseconds: 500), () {
+              final type = message.data['type'] ?? '';
+              onNotificationTap?.call(
+                  type, Map<String, String>.from(message.data));
+            });
+          }
         });
       }
-    });
+    } catch (e) {
+      debugPrint('[CustomerNotificationService] getInitialMessage error: $e');
+    }
   }
 
   Future<void> _showLocalNotification(RemoteMessage message) async {
@@ -186,7 +192,9 @@ class CustomerNotificationService {
   Future<void> registerTokenForOrder(String orderId) async {
     if (kIsWeb) return;
     try {
-      final fcmToken = await FirebaseMessaging.instance.getToken();
+      final fcmToken = await FirebaseMessaging.instance.getToken(
+        vapidKey: '0wqglRYLdebz4nDLL99Gh5QbkK0hHv-Wyk6X0a_hmtY',
+      );
       if (fcmToken == null) return;
 
       final customerUUID = await getOrCreateDeviceUUID();
