@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 import 'package:http/http.dart' as http;
 
 class CustomerApiService {
@@ -11,8 +10,6 @@ class CustomerApiService {
       final response = await http.get(Uri.parse(url)).timeout(_timeout);
       return _parse(response);
     } on TimeoutException {
-      throw CustomerApiException('Connection unavailable', 0);
-    } on SocketException {
       throw CustomerApiException('Connection unavailable', 0);
     } on CustomerApiException {
       rethrow;
@@ -33,8 +30,6 @@ class CustomerApiService {
           .timeout(_timeout);
       return _parse(response);
     } on TimeoutException {
-      throw CustomerApiException('Connection unavailable', 0);
-    } on SocketException {
       throw CustomerApiException('Connection unavailable', 0);
     } on CustomerApiException {
       rethrow;

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 import '../providers/providers.dart';
 import '../models/models.dart';
+import '../theme/app_theme.dart';
 import 'order_tracking_screen.dart';
 
 class CheckoutScreen extends StatefulWidget {
@@ -152,17 +153,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final cart = context.watch<CartProvider>();
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0A14),
+      backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF12121F),
+        backgroundColor: AppColors.surfaceLight,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded,
+              color: AppColors.textPrimaryLight),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
           'Checkout',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+          style: TextStyle(
+              color: AppColors.textPrimaryLight, fontWeight: FontWeight.w700),
         ),
       ),
       body: SingleChildScrollView(
@@ -174,9 +177,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.04),
+                color: AppColors.surfaceLight,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.white.withOpacity(0.08)),
+                border: Border.all(color: AppColors.borderLight),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -184,7 +187,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   const Text(
                     'Order Summary',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: AppColors.textPrimaryLight,
                       fontWeight: FontWeight.w700,
                       fontSize: 16,
                     ),
@@ -195,24 +198,26 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         child: Row(
                           children: [
                             Text('${ci.quantity}×',
-                                style: TextStyle(
-                                    color: Colors.white.withOpacity(0.5),
+                                style: const TextStyle(
+                                    color: AppColors.textSecondaryLight,
                                     fontSize: 13)),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(ci.item.name,
                                   style: const TextStyle(
-                                      color: Colors.white, fontSize: 13)),
+                                      color: AppColors.textPrimaryLight,
+                                      fontSize: 13)),
                             ),
                             Text(
                               '₹${ci.subtotal.toStringAsFixed(2)}',
                               style: const TextStyle(
-                                  color: Colors.white, fontWeight: FontWeight.w600),
+                                  color: AppColors.textPrimaryLight,
+                                  fontWeight: FontWeight.w600),
                             ),
                           ],
                         ),
                       )),
-                  const Divider(color: Colors.white10, height: 20),
+                  const Divider(color: AppColors.borderLight, height: 20),
                   _row('Subtotal', '₹${cart.subtotal.toStringAsFixed(2)}'),
                   const SizedBox(height: 6),
                   _row('Tax (5%)', '₹${cart.taxAmount.toStringAsFixed(2)}'),
@@ -226,7 +231,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             const Text(
               'Choose Payment Method',
               style: TextStyle(
-                color: Colors.white,
+                color: AppColors.textPrimaryLight,
                 fontWeight: FontWeight.w700,
                 fontSize: 16,
               ),
@@ -310,12 +315,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 decoration: BoxDecoration(
                   color: _selectedPaymentMethod == opt.$1
                       ? opt.$5.withOpacity(0.12)
-                      : Colors.white.withOpacity(0.04),
+                      : AppColors.surfaceLight,
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
                     color: _selectedPaymentMethod == opt.$1
                         ? opt.$5
-                        : Colors.white.withOpacity(0.08),
+                        : AppColors.borderLight,
                     width: _selectedPaymentMethod == opt.$1 ? 1.5 : 1,
                   ),
                 ),
@@ -337,15 +342,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           Text(
                             opt.$2,
                             style: const TextStyle(
-                              color: Colors.white,
+                              color: AppColors.textPrimaryLight,
                               fontWeight: FontWeight.w700,
                               fontSize: 14,
                             ),
                           ),
                           Text(
                             opt.$3,
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.5),
+                            style: const TextStyle(
+                              color: AppColors.textSecondaryLight,
                               fontSize: 12,
                             ),
                           ),
@@ -373,13 +378,17 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         children: [
           Text(label,
               style: TextStyle(
-                color: highlight ? Colors.white : Colors.white.withOpacity(0.6),
+                color: highlight
+                    ? AppColors.textPrimaryLight
+                    : AppColors.textSecondaryLight,
                 fontWeight: highlight ? FontWeight.w700 : FontWeight.w400,
                 fontSize: highlight ? 16 : 14,
               )),
           Text(value,
               style: TextStyle(
-                color: highlight ? const Color(0xFFFF6B35) : Colors.white,
+                color: highlight
+                    ? const Color(0xFFFF6B35)
+                    : AppColors.textPrimaryLight,
                 fontWeight: highlight ? FontWeight.w800 : FontWeight.w500,
                 fontSize: highlight ? 18 : 14,
               )),

@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -29,6 +28,10 @@ class CustomerNotificationService {
   CustomerNotificationService._internal();
 
   static const String _deviceUUIDKey = 'customer_device_uuid';
+  static const String _webPushVapidKey = String.fromEnvironment(
+    'FCM_WEB_VAPID_KEY',
+    defaultValue: '',
+  );
 
   // Android notification channel
   static const AndroidNotificationChannel _orderChannel =
@@ -50,16 +53,14 @@ class CustomerNotificationService {
   // ─── Initialization ────────────────────────────────────────────────────────
 
   Future<void> initialize() async {
-    if (kIsWeb) {
-      debugPrint('[CustomerNotificationService] Bypassing FCM init on Web');
-      return;
-    }
     try {
       FirebaseMessaging.onBackgroundMessage(
           _firebaseMessagingBackgroundHandler);
 
       await _requestPermissions();
-      await _initLocalNotifications();
+      if (!kIsWeb) {
+        await _initLocalNotifications();
+      }
 
       await FirebaseMessaging.instance
           .setForegroundNotificationPresentationOptions(
@@ -83,7 +84,7 @@ class CustomerNotificationService {
       sound: true,
     );
 
-    if (Platform.isAndroid) {
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
       await _localNotifications
           .resolvePlatformSpecificImplementation<
               AndroidFlutterLocalNotificationsPlugin>()
@@ -155,6 +156,8 @@ class CustomerNotificationService {
   }
 
   Future<void> _showLocalNotification(RemoteMessage message) async {
+    if (kIsWeb) return;
+
     final notification = message.notification;
     if (notification == null) return;
 
@@ -190,11 +193,8 @@ class CustomerNotificationService {
   /// Call this after a customer places an order to link their FCM token
   /// to the orderId so they receive status updates for that order.
   Future<void> registerTokenForOrder(String orderId) async {
-    if (kIsWeb) return;
     try {
-      final fcmToken = await FirebaseMessaging.instance.getToken(
-        vapidKey: '0wqglRYLdebz4nDLL99Gh5QbkK0hHv-Wyk6X0a_hmtY',
-      );
+      final fcmToken = await _getFcmToken();
       if (fcmToken == null) return;
 
       final customerUUID = await getOrCreateDeviceUUID();
@@ -204,7 +204,7 @@ class CustomerNotificationService {
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'fcmToken': fcmToken,
-          'platform': Platform.isIOS ? 'ios' : 'android',
+          'platform': _platformName,
           'orderId': orderId,
           'customerUUID': customerUUID,
         }),
@@ -220,6 +220,19 @@ class CustomerNotificationService {
     } catch (e) {
       debugPrint('[CustomerNotificationService] registerTokenForOrder error: $e');
     }
+  }
+
+  Future<String?> _getFcmToken() {
+    if (kIsWeb && _webPushVapidKey.isNotEmpty) {
+      return FirebaseMessaging.instance.getToken(vapidKey: _webPushVapidKey);
+    }
+    return FirebaseMessaging.instance.getToken();
+  }
+
+  String get _platformName {
+    if (kIsWeb) return 'web';
+    if (defaultTargetPlatform == TargetPlatform.iOS) return 'ios';
+    return 'android';
   }
 
   // ─── Device UUID ─────────────────────────────────────────────────────────

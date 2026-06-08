@@ -6,6 +6,7 @@ import '../providers/providers.dart';
 import '../models/models.dart';
 import '../config/api_config.dart';
 import '../services/api_service.dart';
+import '../theme/app_theme.dart';
 
 class OrderTrackingScreen extends StatefulWidget {
   final String orderId;
@@ -67,7 +68,10 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Payment Verification Failed: $e'), backgroundColor: const Color(0xFFFF4757)),
+          SnackBar(
+            content: Text('Payment Verification Failed: $e'),
+            backgroundColor: const Color(0xFFFF4757),
+          ),
         );
       }
     }
@@ -75,7 +79,10 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
 
   void _handlePaymentError(PaymentFailureResponse response) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Payment Failed: ${response.message}'), backgroundColor: const Color(0xFFFF4757)),
+      SnackBar(
+        content: Text('Payment Failed: ${response.message}'),
+        backgroundColor: const Color(0xFFFF4757),
+      ),
     );
   }
 
@@ -113,7 +120,10 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to initiate payment: $e'), backgroundColor: const Color(0xFFFF4757)),
+          SnackBar(
+            content: Text('Failed to initiate payment: $e'),
+            backgroundColor: const Color(0xFFFF4757),
+          ),
         );
       }
     }
@@ -142,14 +152,15 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
     final currentStep = _currentStep();
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0A14),
+      backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF12121F),
+        backgroundColor: AppColors.surfaceLight,
         elevation: 0,
         automaticallyImplyLeading: false,
         title: const Text(
           'Order Tracking',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+          style: TextStyle(
+              color: AppColors.textPrimaryLight, fontWeight: FontWeight.w700),
         ),
         actions: [
           TextButton(
@@ -166,7 +177,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                   CircularProgressIndicator(color: Color(0xFFFF6B35)),
                   SizedBox(height: 16),
                   Text('Loading order...',
-                      style: TextStyle(color: Colors.white54)),
+                      style: TextStyle(color: AppColors.textSecondaryLight)),
                 ],
               ),
             )
@@ -176,15 +187,16 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.all(20),
-                child: Column(
-                  children: [
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 800),
+                    child: Column(
+                      children: [
                     // Order number and table
                     Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF1A1A2E), Color(0xFF12121F)],
-                        ),
+                        color: AppColors.surfaceLight,
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
                             color: const Color(0xFFFF6B35).withOpacity(0.3)),
@@ -199,7 +211,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                             const Text(
                               'YOUR PICKUP NO.',
                               style: TextStyle(
-                                color: Colors.white54,
+                                color: AppColors.textSecondaryLight,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w700,
                                 letterSpacing: 1.5,
@@ -208,7 +220,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                             Text(
                               _bill!.orderPickupNumber?.toString() ?? '--',
                               style: const TextStyle(
-                                color: Colors.white,
+                                color: AppColors.textPrimaryLight,
                                 fontSize: 56,
                                 fontWeight: FontWeight.w900,
                                 height: 1.1,
@@ -228,7 +240,8 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                             Text(
                               'Table ${_bill!.tableNumber} — ${_bill!.tableName}',
                               style: const TextStyle(
-                                  color: Colors.white60, fontSize: 14),
+                                  color: AppColors.textSecondaryLight,
+                                  fontSize: 14),
                             ),
                           ],
                         ],
@@ -239,10 +252,9 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                     Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.04),
+                        color: AppColors.surfaceLight,
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                            color: Colors.white.withOpacity(0.08)),
+                        border: Border.all(color: AppColors.borderLight),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -250,7 +262,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                           const Text(
                             'Order Status',
                             style: TextStyle(
-                              color: Colors.white,
+                              color: AppColors.textPrimaryLight,
                               fontWeight: FontWeight.w700,
                               fontSize: 16,
                             ),
@@ -272,7 +284,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                                       decoration: BoxDecoration(
                                         color: isDone
                                             ? const Color(0xFF06D6A0)
-                                            : Colors.white.withOpacity(0.08),
+                                            : AppColors.backgroundLight,
                                         shape: BoxShape.circle,
                                         boxShadow: isActive
                                             ? [
@@ -289,7 +301,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                                         _statusIcons[idx],
                                         color: isDone
                                             ? Colors.white
-                                            : Colors.white24,
+                                            : AppColors.textMutedLight,
                                         size: 20,
                                       ),
                                     ),
@@ -300,7 +312,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                                         height: 32,
                                         color: idx < currentStep
                                             ? const Color(0xFF06D6A0)
-                                            : Colors.white12,
+                                            : AppColors.borderLight,
                                       ),
                                   ],
                                 ),
@@ -311,8 +323,8 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                                     _statusLabels[idx],
                                     style: TextStyle(
                                       color: isDone
-                                          ? Colors.white
-                                          : Colors.white38,
+                                          ? AppColors.textPrimaryLight
+                                          : AppColors.textMutedLight,
                                       fontWeight: isActive
                                           ? FontWeight.w700
                                           : FontWeight.w400,
@@ -371,10 +383,10 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                                   ),
                                 ),
                                 if (_bill!.paymentStatus == 'pending')
-                                  Text(
+                                  const Text(
                                     'Please pay at the counter when your meal is complete.',
                                     style: TextStyle(
-                                      color: Colors.white.withOpacity(0.5),
+                                      color: AppColors.textSecondaryLight,
                                       fontSize: 12,
                                     ),
                                   ),
@@ -387,10 +399,15 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                               onPressed: _startRazorpayPayment,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFFFFBE0B),
-                                foregroundColor: Colors.black,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                foregroundColor: AppColors.textPrimaryLight,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
                               ),
-                              child: const Text('Pay Online', style: TextStyle(fontWeight: FontWeight.w700)),
+                              child: const Text(
+                                'Pay Online',
+                                style: TextStyle(fontWeight: FontWeight.w700),
+                              ),
                             ),
                           ],
                         ],
@@ -401,9 +418,9 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                     Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.04),
+                        color: AppColors.surfaceLight,
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.white.withOpacity(0.08)),
+                        border: Border.all(color: AppColors.borderLight),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -411,13 +428,13 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                           Text(
                             _bill!.restaurantName,
                             style: const TextStyle(
-                              color: Colors.white,
+                              color: AppColors.textPrimaryLight,
                               fontWeight: FontWeight.w800,
                               fontSize: 18,
                             ),
                           ),
                           const SizedBox(height: 16),
-                          const Divider(color: Colors.white10),
+                          const Divider(color: AppColors.borderLight),
                           const SizedBox(height: 12),
                           ..._bill!.items.map((item) => Padding(
                                 padding: const EdgeInsets.only(bottom: 8),
@@ -425,35 +442,37 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                                   children: [
                                     Text('${item.quantity}×',
                                         style: const TextStyle(
-                                            color: Colors.white54, fontSize: 13)),
+                                            color: AppColors.textSecondaryLight,
+                                            fontSize: 13)),
                                     const SizedBox(width: 8),
                                     Expanded(
                                       child: Text(item.name,
                                           style: const TextStyle(
-                                              color: Colors.white, fontSize: 13)),
+                                              color: AppColors.textPrimaryLight,
+                                              fontSize: 13)),
                                     ),
                                     Text(
                                       '₹${item.subtotal.toStringAsFixed(2)}',
                                       style: const TextStyle(
-                                          color: Colors.white,
+                                          color: AppColors.textPrimaryLight,
                                           fontWeight: FontWeight.w600),
                                     ),
                                   ],
                                 ),
                               )),
-                          const Divider(color: Colors.white10, height: 20),
+                          const Divider(color: AppColors.borderLight, height: 20),
                           _billRow('Subtotal',
                               '₹${_bill!.subtotal.toStringAsFixed(2)}'),
                           const SizedBox(height: 6),
                           _billRow('Tax (${_bill!.taxPercent.toInt()}%)',
                               '₹${_bill!.taxAmount.toStringAsFixed(2)}'),
-                          const Divider(color: Colors.white10, height: 16),
+                          const Divider(color: AppColors.borderLight, height: 16),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               const Text('Total',
                                   style: TextStyle(
-                                      color: Colors.white,
+                                      color: AppColors.textPrimaryLight,
                                       fontWeight: FontWeight.w800,
                                       fontSize: 16)),
                               Text(
@@ -470,10 +489,10 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    Text(
+                    const Text(
                       'Auto-refreshes every 3 seconds • Pull to refresh',
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.25),
+                        color: AppColors.textMutedLight,
                         fontSize: 11,
                       ),
                     ),
@@ -481,6 +500,8 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                 ),
               ),
             ),
+          ),
+        ),
     );
   }
 
@@ -488,9 +509,12 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label,
-              style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 13)),
+              style: const TextStyle(
+                  color: AppColors.textSecondaryLight, fontSize: 13)),
           Text(value,
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
+              style: const TextStyle(
+                  color: AppColors.textPrimaryLight,
+                  fontWeight: FontWeight.w500)),
         ],
       );
 }

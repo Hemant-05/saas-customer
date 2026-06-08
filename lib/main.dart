@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'providers/providers.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
+import 'firebase_options.dart';
 import 'screens/home_screen.dart';
 import 'screens/menu_screen.dart';
 import 'screens/order_tracking_screen.dart';
@@ -54,7 +55,7 @@ void main() async {
   usePathUrlStrategy();
 
   try {
-    await Firebase.initializeApp();
+    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
     await CustomerNotificationService().initialize();
   } catch (e) {
     debugPrint('[Main] Firebase/notification init failed (non-fatal): $e');
@@ -62,7 +63,8 @@ void main() async {
 
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
-    statusBarIconBrightness: Brightness.light,
+    statusBarIconBrightness: Brightness.dark,
+    statusBarBrightness: Brightness.light,
   ));
   runApp(const QRCafeCustomerApp());
 }

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../providers/providers.dart';
 import '../models/models.dart';
+import '../theme/app_theme.dart';
 import 'cart_screen.dart';
 
 class MenuScreen extends StatefulWidget {
@@ -61,12 +62,12 @@ class _MenuScreenState extends State<MenuScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0A14),
+      backgroundColor: AppColors.backgroundLight,
       body: Consumer<CustomerMenuProvider>(
         builder: (_, menuProv, __) {
           if (menuProv.isLoading) {
             return const Scaffold(
-              backgroundColor: Color(0xFF0A0A14),
+              backgroundColor: AppColors.backgroundLight,
               body: Center(
                 child: CircularProgressIndicator(color: Color(0xFFFF6B35)),
               ),
@@ -76,13 +77,13 @@ class _MenuScreenState extends State<MenuScreen> {
             final isNotServiceable =
                 menuProv.errorMessage!.toLowerCase().contains('serviceable');
             return Scaffold(
-              backgroundColor: const Color(0xFF0A0A14),
+              backgroundColor: AppColors.backgroundLight,
               appBar: AppBar(
                 backgroundColor: Colors.transparent,
                 elevation: 0,
                 leading: IconButton(
                   icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                      color: Colors.white),
+                      color: AppColors.textPrimaryLight),
                   onPressed: () => Navigator.pop(context),
                 ),
               ),
@@ -104,7 +105,7 @@ class _MenuScreenState extends State<MenuScreen> {
                         menuProv.errorMessage!,
                         textAlign: TextAlign.center,
                         style: const TextStyle(
-                          color: Colors.white,
+                          color: AppColors.textPrimaryLight,
                           fontSize: 18,
                           fontWeight: FontWeight.w600,
                         ),
@@ -113,10 +114,10 @@ class _MenuScreenState extends State<MenuScreen> {
                       if (isNotServiceable &&
                           menuProv.availableTables != null &&
                           menuProv.availableTables!.isNotEmpty) ...[
-                        Text(
+                        const Text(
                           'Available Tables:',
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.7),
+                            color: AppColors.textSecondaryLight,
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
                           ),
@@ -184,13 +185,13 @@ class _MenuScreenState extends State<MenuScreen> {
                 slivers: [
                   // App bar with restaurant info
                   SliverAppBar(
-                    backgroundColor: const Color(0xFF0A0A14),
+                    backgroundColor: AppColors.backgroundLight,
                     floating: false,
                     pinned: true,
                     expandedHeight: 180,
                     leading: IconButton(
                       icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                          color: Colors.white),
+                          color: AppColors.textPrimaryLight),
                       onPressed: () => Navigator.pop(context),
                     ),
                     flexibleSpace: FlexibleSpaceBar(
@@ -201,7 +202,10 @@ class _MenuScreenState extends State<MenuScreen> {
                           gradient: LinearGradient(
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
-                            colors: [Color(0xFF12121F), Color(0xFF0A0A14)],
+                            colors: [
+                              AppColors.surfaceLight,
+                              AppColors.backgroundLight
+                            ],
                           ),
                         ),
                         child: Align(
@@ -237,16 +241,17 @@ class _MenuScreenState extends State<MenuScreen> {
                                     Text(
                                       menuProv.restaurantInfo?.name ?? '',
                                       style: const TextStyle(
-                                        color: Colors.white,
+                                        color: AppColors.textPrimaryLight,
                                         fontWeight: FontWeight.w800,
                                         fontSize: 18,
                                       ),
                                     ),
                                     if (menuProv.tableInfo != null)
                                       Text(
-                                        'Table ${menuProv.tableInfo?.tableNumber ?? ''} — ${menuProv.tableInfo?.tableName ?? ''}',
-                                        style: TextStyle(
-                                          color: Colors.white.withOpacity(0.5),
+                                        'Table ${menuProv.tableInfo?.tableNumber ?? ''} '
+                                        '— ${menuProv.tableInfo?.tableName ?? ''}',
+                                        style: const TextStyle(
+                                          color: AppColors.textSecondaryLight,
                                           fontSize: 12,
                                         ),
                                       ),
@@ -262,7 +267,7 @@ class _MenuScreenState extends State<MenuScreen> {
                       preferredSize: const Size.fromHeight(52),
                       child: Container(
                         height: 52,
-                        color: const Color(0xFF0A0A14),
+                        color: AppColors.backgroundLight,
                         child: ListView.builder(
                           scrollDirection: Axis.horizontal,
                           padding: const EdgeInsets.symmetric(
@@ -285,15 +290,15 @@ class _MenuScreenState extends State<MenuScreen> {
                                   decoration: BoxDecoration(
                                     color: isSelected
                                         ? const Color(0xFFFF6B35)
-                                        : Colors.white.withOpacity(0.06),
+                                        : AppColors.surfaceLight,
                                     borderRadius: BorderRadius.circular(20),
                                   ),
                                   child: Text(
                                     cat,
                                     style: TextStyle(
                                       color: isSelected
-                                          ? Colors.white
-                                          : Colors.white54,
+                                           ? Colors.white
+                                           : AppColors.textSecondaryLight,
                                       fontWeight: isSelected
                                           ? FontWeight.w700
                                           : FontWeight.w400,
@@ -348,7 +353,7 @@ class _MenuScreenState extends State<MenuScreen> {
                     ),
                   // Menu items
                   SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 120),
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 200),
                     sliver: SliverList(
                       delegate: SliverChildBuilderDelegate(
                         (_, idx) {
@@ -480,11 +485,17 @@ class _MenuScreenState extends State<MenuScreen> {
                           child: Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF06D6A0).withOpacity(0.1),
+                              color: AppColors.surfaceLight,
                               border: Border.all(
-                                  color:
-                                      const Color(0xFF06D6A0).withOpacity(0.4)),
+                                  color: const Color(0xFF06D6A0), width: 1.5),
                               borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFF06D6A0).withOpacity(0.15),
+                                  blurRadius: 20,
+                                  offset: const Offset(0, 8),
+                                ),
+                              ],
                             ),
                             child: const Row(
                               children: [
@@ -502,7 +513,7 @@ class _MenuScreenState extends State<MenuScreen> {
                                               fontWeight: FontWeight.w700)),
                                       Text('Tap to track your order or pay',
                                           style: TextStyle(
-                                              color: Colors.white70,
+                                              color: AppColors.textSecondaryLight,
                                               fontSize: 12)),
                                     ],
                                   ),
@@ -563,7 +574,7 @@ class _CategorySection extends StatelessWidget {
           child: Text(
             category,
             style: const TextStyle(
-              color: Colors.white,
+              color: AppColors.textPrimaryLight,
               fontWeight: FontWeight.w800,
               fontSize: 18,
             ),
@@ -597,9 +608,9 @@ class _MenuItemCard extends StatelessWidget {
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.05),
+          color: AppColors.surfaceLight,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white.withOpacity(0.08)),
+          border: Border.all(color: AppColors.borderLight),
         ),
         padding: const EdgeInsets.all(14),
         child: Row(
@@ -641,7 +652,7 @@ class _MenuItemCard extends StatelessWidget {
                         child: Text(
                           item.name,
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: AppColors.textPrimaryLight,
                             fontWeight: FontWeight.w700,
                             fontSize: 15,
                           ),
@@ -655,8 +666,8 @@ class _MenuItemCard extends StatelessWidget {
                       item.description,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.45),
+                      style: const TextStyle(
+                        color: AppColors.textSecondaryLight,
                         fontSize: 12,
                         height: 1.4,
                       ),
@@ -688,27 +699,27 @@ class _MenuItemCard extends StatelessWidget {
                           placeholder: (_, __) => Container(
                             width: 80,
                             height: 80,
-                            color: Colors.white.withOpacity(0.06),
+                            color: AppColors.backgroundLight,
                             child: const Icon(Icons.fastfood_rounded,
-                                color: Colors.white24, size: 28),
+                                color: AppColors.textMutedLight, size: 28),
                           ),
                           errorWidget: (_, __, ___) => Container(
                             width: 80,
                             height: 80,
-                            color: Colors.white.withOpacity(0.06),
+                            color: AppColors.backgroundLight,
                             child: const Icon(Icons.fastfood_rounded,
-                                color: Colors.white24, size: 28),
+                                color: AppColors.textMutedLight, size: 28),
                           ),
                         )
                       : Container(
                           width: 80,
                           height: 80,
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.06),
+                            color: AppColors.backgroundLight,
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: const Icon(Icons.fastfood_rounded,
-                              color: Colors.white24, size: 28),
+                              color: AppColors.textMutedLight, size: 28),
                         ),
                 ),
                 const SizedBox(height: 8),
@@ -807,7 +818,7 @@ class _ItemDetailSheetState extends State<_ItemDetailSheet> {
       maxChildSize: 0.9,
       builder: (_, scrollCtrl) => Container(
         decoration: const BoxDecoration(
-          color: Color(0xFF12121F),
+          color: AppColors.surfaceLight,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: ListView(
@@ -820,7 +831,7 @@ class _ItemDetailSheetState extends State<_ItemDetailSheet> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.white24,
+                  color: AppColors.borderLight,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -870,7 +881,7 @@ class _ItemDetailSheetState extends State<_ItemDetailSheet> {
                   child: Text(
                     widget.item.name,
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: AppColors.textPrimaryLight,
                       fontSize: 20,
                       fontWeight: FontWeight.w800,
                     ),
@@ -891,8 +902,8 @@ class _ItemDetailSheetState extends State<_ItemDetailSheet> {
               const SizedBox(height: 10),
               Text(
                 widget.item.description,
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.6),
+                style: const TextStyle(
+                  color: AppColors.textSecondaryLight,
                   fontSize: 14,
                   height: 1.5,
                 ),
@@ -901,23 +912,24 @@ class _ItemDetailSheetState extends State<_ItemDetailSheet> {
             const SizedBox(height: 20),
             TextField(
               controller: _customizationCtrl,
-              style: const TextStyle(color: Colors.white),
+              style: const TextStyle(color: AppColors.textPrimaryLight),
               decoration: InputDecoration(
                 labelText: 'Special instructions (optional)',
                 hintText: 'e.g., No sugar, Extra spicy...',
-                labelStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
-                hintStyle: TextStyle(color: Colors.white.withOpacity(0.25)),
+                labelStyle:
+                    const TextStyle(color: AppColors.textSecondaryLight),
+                hintStyle: const TextStyle(color: AppColors.textMutedLight),
                 prefixIcon: const Icon(Icons.edit_note_rounded,
-                    color: Colors.white38, size: 20),
+                    color: AppColors.textSecondaryLight, size: 20),
                 filled: true,
-                fillColor: Colors.white.withOpacity(0.06),
+                fillColor: AppColors.backgroundLight,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.white.withOpacity(0.08)),
+                  borderSide: const BorderSide(color: AppColors.borderLight),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.white.withOpacity(0.08)),
+                  borderSide: const BorderSide(color: AppColors.borderLight),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),

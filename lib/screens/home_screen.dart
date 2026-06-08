@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:provider/provider.dart';
 import '../providers/providers.dart';
+import '../theme/app_theme.dart';
 import 'package:go_router/go_router.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -74,13 +75,14 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0A14),
+      backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.history_rounded, color: Colors.white),
+            icon: const Icon(Icons.history_rounded,
+                color: AppColors.textPrimaryLight),
             onPressed: () {
               context.go('/history');
             },
@@ -122,16 +124,16 @@ class _HomeScreenState extends State<HomeScreen> {
                 style: TextStyle(
                   fontSize: 34,
                   fontWeight: FontWeight.w800,
-                  color: Colors.white,
+                  color: AppColors.textPrimaryLight,
                   letterSpacing: -1,
                 ),
               ),
               const SizedBox(height: 8),
-              Text(
+              const Text(
                 'Scan the QR code on your table\nto browse the menu and order',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: Colors.white.withOpacity(0.5),
+                  color: AppColors.textSecondaryLight,
                   fontSize: 15,
                   height: 1.5,
                 ),
@@ -183,23 +185,23 @@ class _HomeScreenState extends State<HomeScreen> {
                   TextButton(
                     onPressed: () => setState(() => _scannerOpen = false),
                     child: const Text('Cancel',
-                        style: TextStyle(color: Colors.white54)),
+                        style: TextStyle(color: AppColors.textSecondaryLight)),
                   ),
                 ],
                 const SizedBox(height: 24),
                 // Divider
-                Row(
+                const Row(
                   children: [
-                    Expanded(child: Divider(color: Colors.white.withOpacity(0.08))),
+                    Expanded(child: Divider(color: AppColors.borderLight)),
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      padding: EdgeInsets.symmetric(horizontal: 16),
                       child: Text(
                         'or paste URL',
                         style: TextStyle(
-                            color: Colors.white.withOpacity(0.3), fontSize: 12),
+                            color: AppColors.textMutedLight, fontSize: 12),
                       ),
                     ),
-                    Expanded(child: Divider(color: Colors.white.withOpacity(0.08))),
+                    Expanded(child: Divider(color: AppColors.borderLight)),
                   ],
                 ),
                 const SizedBox(height: 20),
@@ -207,19 +209,19 @@ class _HomeScreenState extends State<HomeScreen> {
               // Manual URL input (for prototype testing and web fallback)
               TextField(
                 controller: _urlController,
-                style: const TextStyle(color: Colors.white),
+                style: const TextStyle(color: AppColors.textPrimaryLight),
                 decoration: InputDecoration(
                   hintText: 'Paste table URL here...',
-                  hintStyle: TextStyle(color: Colors.white.withOpacity(0.3)),
+                  hintStyle: const TextStyle(color: AppColors.textMutedLight),
                   filled: true,
-                  fillColor: Colors.white.withOpacity(0.06),
+                  fillColor: AppColors.surfaceLight,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(color: Colors.white.withOpacity(0.08)),
+                    borderSide: const BorderSide(color: AppColors.borderLight),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(color: Colors.white.withOpacity(0.08)),
+                    borderSide: const BorderSide(color: AppColors.borderLight),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
@@ -262,7 +264,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text('Active Order Found', style: TextStyle(color: Color(0xFF06D6A0), fontWeight: FontWeight.w700)),
-                                    Text('Tap to track your order or pay', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                                    Text('Tap to track your order or pay',
+                                        style: TextStyle(
+                                            color:
+                                                AppColors.textSecondaryLight,
+                                            fontSize: 12)),
                                   ],
                                 ),
                               ),
