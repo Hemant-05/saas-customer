@@ -433,6 +433,22 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                               fontSize: 18,
                             ),
                           ),
+                          if (_bill!.restaurantPhone != null) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              'Ph: ${_bill!.restaurantPhone}',
+                              style: const TextStyle(
+                                  color: AppColors.textSecondaryLight, fontSize: 13),
+                            ),
+                          ],
+                          if (_bill!.restaurantGstNumber != null && _bill!.restaurantGstNumber!.isNotEmpty) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              'GST: ${_bill!.restaurantGstNumber}',
+                              style: const TextStyle(
+                                  color: AppColors.textSecondaryLight, fontSize: 13),
+                            ),
+                          ],
                           const SizedBox(height: 16),
                           const Divider(color: AppColors.borderLight),
                           const SizedBox(height: 12),

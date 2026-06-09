@@ -157,6 +157,8 @@ class OrderBill {
   final String orderId;
   final String restaurantName;
   final String? restaurantLogoUrl;
+  final String? restaurantPhone;
+  final String? restaurantGstNumber;
   final int tableNumber;
   final String tableName;
   final String orderNumber;
@@ -176,6 +178,8 @@ class OrderBill {
     required this.orderId,
     required this.restaurantName,
     this.restaurantLogoUrl,
+    this.restaurantPhone,
+    this.restaurantGstNumber,
     required this.tableNumber,
     required this.tableName,
     required this.orderNumber,
@@ -198,6 +202,8 @@ class OrderBill {
       orderId: billJson['orderId'] ?? '',
       restaurantName: billJson['restaurantName'] ?? '',
       restaurantLogoUrl: billJson['restaurantLogoUrl'],
+      restaurantPhone: billJson['restaurantPhone'],
+      restaurantGstNumber: billJson['restaurantGstNumber'],
       tableNumber: (billJson['tableNumber'] as num?)?.toInt() ?? 0,
       tableName: billJson['tableName'] ?? '',
       orderNumber: billJson['orderNumber'] ?? '',

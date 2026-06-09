@@ -281,13 +281,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         const Color(0xFF6C63FF),
       ),
       (
-        'cash',
-        'Pay Now — Cash',
-        'Pay cash to the waiter',
-        Icons.money_rounded,
-        const Color(0xFF06D6A0),
-      ),
-      (
         'card',
         'Pay Now — Card',
         'Swipe card at the counter',

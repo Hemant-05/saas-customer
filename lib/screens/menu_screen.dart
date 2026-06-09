@@ -2,6 +2,7 @@ import 'package:customer_app/screens/order_tracking_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'dart:async';
 import '../providers/providers.dart';
 import '../models/models.dart';
 import '../theme/app_theme.dart';
@@ -25,25 +26,33 @@ class _MenuScreenState extends State<MenuScreen> {
   final ScrollController _scrollController = ScrollController();
   String _selectedCategory = 'All';
   final Map<String, GlobalKey> _categoryKeys = {};
+  Timer? _refreshTimer;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (widget.tableId != null) {
-        context
-            .read<CustomerMenuProvider>()
-            .fetchMenu(widget.restaurantId, widget.tableId!);
-      } else {
-        context
-            .read<CustomerMenuProvider>()
-            .fetchTruckMenu(widget.restaurantId);
-      }
+      _fetchMenu();
     });
+
+    // Set up auto-refresh every 30 seconds for real-time menu updates
+    _refreshTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      _fetchMenu(isBackgroundRefresh: true);
+    });
+  }
+
+  void _fetchMenu({bool isBackgroundRefresh = false}) {
+    if (!mounted) return;
+    if (widget.tableId != null) {
+      context.read<CustomerMenuProvider>().fetchMenu(widget.restaurantId, widget.tableId!, isBackground: isBackgroundRefresh);
+    } else {
+      context.read<CustomerMenuProvider>().fetchTruckMenu(widget.restaurantId, isBackground: isBackgroundRefresh);
+    }
   }
 
   @override
   void dispose() {
+    _refreshTimer?.cancel();
     _scrollController.dispose();
     super.dispose();
   }
@@ -111,59 +120,16 @@ class _MenuScreenState extends State<MenuScreen> {
                         ),
                       ),
                       const SizedBox(height: 24),
-                      if (isNotServiceable &&
-                          menuProv.availableTables != null &&
-                          menuProv.availableTables!.isNotEmpty) ...[
-                        const Text(
-                          'Available Tables:',
-                          style: TextStyle(
-                            color: AppColors.textSecondaryLight,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          alignment: WrapAlignment.center,
-                          children: menuProv.availableTables!.map<Widget>((t) {
-                            return Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 8),
-                              decoration: BoxDecoration(
-                                color:
-                                    const Color(0xFF06D6A0).withOpacity(0.15),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                    color: const Color(0xFF06D6A0)
-                                        .withOpacity(0.3)),
-                              ),
-                              child: Text(
-                                '${t['tableName'] ?? 'Table ${t['tableNumber']}'}',
-                                style: const TextStyle(
-                                  color: Color(0xFF06D6A0),
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                      ] else ...[
-                        ElevatedButton(
-                          onPressed: () {
-                            if (widget.tableId != null) {
-                              menuProv.fetchMenu(widget.restaurantId, widget.tableId!);
-                            } else {
-                              menuProv.fetchTruckMenu(widget.restaurantId);
-                            }
-                          },
-                          style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFFF6B35)),
-                          child: const Text('Retry',
-                              style: TextStyle(color: Colors.white)),
-                        ),
-                      ],
+                      const SizedBox(height: 24),
+                      ElevatedButton(
+                        onPressed: () {
+                          _fetchMenu();
+                        },
+                        style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFFF6B35)),
+                        child: const Text('Retry',
+                            style: TextStyle(color: Colors.white)),
+                      ),
                     ],
                   ),
                 ),
@@ -246,15 +212,6 @@ class _MenuScreenState extends State<MenuScreen> {
                                         fontSize: 18,
                                       ),
                                     ),
-                                    if (menuProv.tableInfo != null)
-                                      Text(
-                                        'Table ${menuProv.tableInfo?.tableNumber ?? ''} '
-                                        '— ${menuProv.tableInfo?.tableName ?? ''}',
-                                        style: const TextStyle(
-                                          color: AppColors.textSecondaryLight,
-                                          fontSize: 12,
-                                        ),
-                                      ),
                                   ],
                                 ),
                               ),

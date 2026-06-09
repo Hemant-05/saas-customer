@@ -82,6 +82,24 @@ class _OrderReceiptScreenState extends State<OrderReceiptScreen> {
                                 ),
                               ),
                             ),
+                            if (_bill!.restaurantPhone != null) ...[
+                              const SizedBox(height: 4),
+                              Center(
+                                child: Text(
+                                  'Ph: ${_bill!.restaurantPhone}',
+                                  style: const TextStyle(color: Colors.black54, fontSize: 13),
+                                ),
+                              ),
+                            ],
+                            if (_bill!.restaurantGstNumber != null && _bill!.restaurantGstNumber!.isNotEmpty) ...[
+                              const SizedBox(height: 2),
+                              Center(
+                                child: Text(
+                                  'GST: ${_bill!.restaurantGstNumber}',
+                                  style: const TextStyle(color: Colors.black54, fontSize: 13),
+                                ),
+                              ),
+                            ],
                             const SizedBox(height: 8),
                             Center(
                               child: Text(

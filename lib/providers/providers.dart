@@ -18,16 +18,18 @@ class CustomerMenuProvider extends ChangeNotifier {
   List<dynamic>? availableTables;
   DateTime? lastUpdatedAt;
 
-  Future<void> fetchMenu(String restaurantId, String tableId) async {
+  Future<void> fetchMenu(String restaurantId, String tableId, {bool isBackground = false}) async {
     if (menuByCategory.isEmpty) {
       final restored = await _restoreMenuFromCache(restaurantId, tableId);
       if (restored) notifyListeners();
     }
 
     final hasSavedData = menuByCategory.isNotEmpty;
-    isLoading = !hasSavedData;
-    errorMessage = null;
-    notifyListeners();
+    if (!isBackground) {
+      isLoading = !hasSavedData;
+      errorMessage = null;
+      notifyListeners();
+    }
     try {
       final response = await CustomerApiService.get(
         CustomerApiConfig.publicMenu(restaurantId, tableId),
@@ -57,20 +59,24 @@ class CustomerMenuProvider extends ChangeNotifier {
         errorMessage = 'Menu is not available yet. Please try again.';
       }
     }
-    isLoading = false;
-    notifyListeners();
+    if (!isBackground) {
+      isLoading = false;
+      notifyListeners();
+    }
   }
 
-  Future<void> fetchTruckMenu(String restaurantId) async {
+  Future<void> fetchTruckMenu(String restaurantId, {bool isBackground = false}) async {
     if (menuByCategory.isEmpty) {
       final restored = await _restoreMenuFromCache(restaurantId, 'truck');
       if (restored) notifyListeners();
     }
 
     final hasSavedData = menuByCategory.isNotEmpty;
-    isLoading = !hasSavedData;
-    errorMessage = null;
-    notifyListeners();
+    if (!isBackground) {
+      isLoading = !hasSavedData;
+      errorMessage = null;
+      notifyListeners();
+    }
     try {
       final response = await CustomerApiService.get(
         CustomerApiConfig.publicTruckMenu(restaurantId),
@@ -95,8 +101,10 @@ class CustomerMenuProvider extends ChangeNotifier {
         errorMessage = 'Menu is not available yet. Please try again.';
       }
     }
-    isLoading = false;
-    notifyListeners();
+    if (!isBackground) {
+      isLoading = false;
+      notifyListeners();
+    }
   }
 
   void _applyMenuData(Map<String, dynamic> data) {
