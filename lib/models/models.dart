@@ -2,11 +2,15 @@ class RestaurantInfo {
   final String restaurantId;
   final String name;
   final String? logoUrl;
+  final bool isAcceptingOrders;
+  final String businessType;
 
   const RestaurantInfo({
     required this.restaurantId,
     required this.name,
     this.logoUrl,
+    this.isAcceptingOrders = true,
+    this.businessType = 'cafe_restaurant',
   });
 
   factory RestaurantInfo.fromJson(Map<String, dynamic> json) {
@@ -14,6 +18,8 @@ class RestaurantInfo {
       restaurantId: json['restaurantId'] ?? '',
       name: json['name'] ?? '',
       logoUrl: json['logoUrl'],
+      isAcceptingOrders: json['isAcceptingOrders'] ?? true,
+      businessType: json['businessType'] ?? 'cafe_restaurant',
     );
   }
 
@@ -21,7 +27,24 @@ class RestaurantInfo {
         'restaurantId': restaurantId,
         'name': name,
         'logoUrl': logoUrl,
+        'isAcceptingOrders': isAcceptingOrders,
+        'businessType': businessType,
       };
+
+  RestaurantInfo copyWith({
+    String? name,
+    String? logoUrl,
+    bool? isAcceptingOrders,
+    String? businessType,
+  }) {
+    return RestaurantInfo(
+      restaurantId: restaurantId,
+      name: name ?? this.name,
+      logoUrl: logoUrl ?? this.logoUrl,
+      isAcceptingOrders: isAcceptingOrders ?? this.isAcceptingOrders,
+      businessType: businessType ?? this.businessType,
+    );
+  }
 }
 
 class TableInfo {
@@ -228,8 +251,12 @@ class OrderBill {
         'orderId': orderId,
         'restaurantName': restaurantName,
         'restaurantLogoUrl': restaurantLogoUrl,
+        'restaurantPhone': restaurantPhone,
+        'restaurantGstNumber': restaurantGstNumber,
         'tableNumber': tableNumber,
         'tableName': tableName,
+        'businessType': businessType,
+        'orderPickupNumber': orderPickupNumber,
         'orderNumber': orderNumber,
         'items': items.map((item) => item.toJson()).toList(),
         'subtotal': subtotal,

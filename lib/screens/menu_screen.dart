@@ -27,12 +27,21 @@ class _MenuScreenState extends State<MenuScreen> {
   String _selectedCategory = 'All';
   final Map<String, GlobalKey> _categoryKeys = {};
   Timer? _refreshTimer;
+  CustomerMenuProvider? _menuProvider;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _menuProvider ??= context.read<CustomerMenuProvider>();
+  }
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _fetchMenu();
+      _menuProvider?.connectRealtime(widget.restaurantId,
+          tableId: widget.tableId);
     });
 
     // Set up auto-refresh every 30 seconds for real-time menu updates
@@ -44,15 +53,19 @@ class _MenuScreenState extends State<MenuScreen> {
   void _fetchMenu({bool isBackgroundRefresh = false}) {
     if (!mounted) return;
     if (widget.tableId != null) {
-      context.read<CustomerMenuProvider>().fetchMenu(widget.restaurantId, widget.tableId!, isBackground: isBackgroundRefresh);
+      context.read<CustomerMenuProvider>().fetchMenu(
+          widget.restaurantId, widget.tableId!,
+          isBackground: isBackgroundRefresh);
     } else {
-      context.read<CustomerMenuProvider>().fetchTruckMenu(widget.restaurantId, isBackground: isBackgroundRefresh);
+      context.read<CustomerMenuProvider>().fetchTruckMenu(widget.restaurantId,
+          isBackground: isBackgroundRefresh);
     }
   }
 
   @override
   void dispose() {
     _refreshTimer?.cancel();
+    _menuProvider?.disconnectRealtime();
     _scrollController.dispose();
     super.dispose();
   }
@@ -138,6 +151,8 @@ class _MenuScreenState extends State<MenuScreen> {
           }
 
           final allCategories = ['All', ...menuProv.categories];
+          final isAcceptingOrders =
+              menuProv.restaurantInfo?.isAcceptingOrders ?? true;
 
           // Build category keys
           for (final cat in menuProv.categories) {
@@ -254,8 +269,8 @@ class _MenuScreenState extends State<MenuScreen> {
                                     cat,
                                     style: TextStyle(
                                       color: isSelected
-                                           ? Colors.white
-                                           : AppColors.textSecondaryLight,
+                                          ? Colors.white
+                                          : AppColors.textSecondaryLight,
                                       fontWeight: isSelected
                                           ? FontWeight.w700
                                           : FontWeight.w400,
@@ -279,10 +294,12 @@ class _MenuScreenState extends State<MenuScreen> {
                           vertical: 10,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFFB020).withOpacity(0.12),
+                          color:
+                              const Color(0xFFFFB020).withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: const Color(0xFFFFB020).withOpacity(0.25),
+                            color:
+                                const Color(0xFFFFB020).withValues(alpha: 0.25),
                           ),
                         ),
                         child: const Row(
@@ -301,6 +318,39 @@ class _MenuScreenState extends State<MenuScreen> {
                                   fontWeight: FontWeight.w700,
                                   fontSize: 12,
                                   height: 1.2,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  if (!isAcceptingOrders)
+                    SliverToBoxAdapter(
+                      child: Container(
+                        margin: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color:
+                              const Color(0xFFFFB020).withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color:
+                                const Color(0xFFFFB020).withValues(alpha: 0.32),
+                          ),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.pause_circle_filled_rounded,
+                                color: Color(0xFFFFB020), size: 20),
+                            SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                'Ordering is paused right now. You can browse the menu.',
+                                style: TextStyle(
+                                  color: AppColors.textPrimaryLight,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 12,
                                 ),
                               ),
                             ),
@@ -342,28 +392,49 @@ class _MenuScreenState extends State<MenuScreen> {
                       margin: const EdgeInsets.all(16),
                       child: SafeArea(
                         child: GestureDetector(
-                          onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => CartScreen(
-                                restaurantId: widget.restaurantId,
-                                tableId: widget.tableId,
-                                restaurantInfo: menuProv.restaurantInfo!,
-                                tableInfo: menuProv.tableInfo,
+                          onTap: () {
+                            if (!isAcceptingOrders) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content:
+                                      Text('Ordering is paused right now.'),
+                                ),
+                              );
+                              return;
+                            }
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => CartScreen(
+                                  restaurantId: widget.restaurantId,
+                                  tableId: widget.tableId,
+                                  restaurantInfo: menuProv.restaurantInfo!,
+                                  tableInfo: menuProv.tableInfo,
+                                ),
                               ),
-                            ),
-                          ),
+                            );
+                          },
                           child: Container(
                             padding: const EdgeInsets.all(18),
                             decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [Color(0xFFFF6B35), Color(0xFFFF9A3C)],
-                              ),
+                              gradient: isAcceptingOrders
+                                  ? const LinearGradient(
+                                      colors: [
+                                        Color(0xFFFF6B35),
+                                        Color(0xFFFF9A3C),
+                                      ],
+                                    )
+                                  : const LinearGradient(
+                                      colors: [
+                                        Color(0xFF94A3B8),
+                                        Color(0xFF64748B),
+                                      ],
+                                    ),
                               borderRadius: BorderRadius.circular(18),
                               boxShadow: [
                                 BoxShadow(
-                                  color:
-                                      const Color(0xFFFF6B35).withOpacity(0.4),
+                                  color: const Color(0xFFFF6B35)
+                                      .withValues(alpha: 0.4),
                                   blurRadius: 20,
                                   offset: const Offset(0, 8),
                                 ),
@@ -375,7 +446,7 @@ class _MenuScreenState extends State<MenuScreen> {
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 10, vertical: 4),
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.25),
+                                    color: Colors.white.withValues(alpha: 0.25),
                                     borderRadius: BorderRadius.circular(10),
                                   ),
                                   child: Text(
@@ -388,9 +459,11 @@ class _MenuScreenState extends State<MenuScreen> {
                                   ),
                                 ),
                                 const SizedBox(width: 12),
-                                const Text(
-                                  'View Cart',
-                                  style: TextStyle(
+                                Text(
+                                  isAcceptingOrders
+                                      ? 'View Cart'
+                                      : 'Ordering paused',
+                                  style: const TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.w700,
                                     fontSize: 16,
@@ -448,7 +521,8 @@ class _MenuScreenState extends State<MenuScreen> {
                               borderRadius: BorderRadius.circular(16),
                               boxShadow: [
                                 BoxShadow(
-                                  color: const Color(0xFF06D6A0).withOpacity(0.15),
+                                  color: const Color(0xFF06D6A0)
+                                      .withValues(alpha: 0.15),
                                   blurRadius: 20,
                                   offset: const Offset(0, 8),
                                 ),
@@ -470,7 +544,8 @@ class _MenuScreenState extends State<MenuScreen> {
                                               fontWeight: FontWeight.w700)),
                                       Text('Tap to track your order or pay',
                                           style: TextStyle(
-                                              color: AppColors.textSecondaryLight,
+                                              color:
+                                                  AppColors.textSecondaryLight,
                                               fontSize: 12)),
                                     ],
                                   ),
@@ -499,7 +574,7 @@ class _MenuScreenState extends State<MenuScreen> {
         height: 50,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: const Color(0xFFFF6B35).withOpacity(0.15),
+          color: const Color(0xFFFF6B35).withValues(alpha: 0.15),
         ),
         child: Center(
           child: Text(

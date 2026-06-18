@@ -5,6 +5,7 @@ import '../services/offline_cache_service.dart';
 import '../services/notification_service.dart';
 import '../config/api_config.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'package:uuid/uuid.dart';
 
 class CustomerMenuProvider extends ChangeNotifier {
@@ -17,8 +18,12 @@ class CustomerMenuProvider extends ChangeNotifier {
   String? errorMessage;
   List<dynamic>? availableTables;
   DateTime? lastUpdatedAt;
+  io.Socket? _socket;
+  String? _socketRestaurantId;
+  String? _socketTableId;
 
-  Future<void> fetchMenu(String restaurantId, String tableId, {bool isBackground = false}) async {
+  Future<void> fetchMenu(String restaurantId, String tableId,
+      {bool isBackground = false}) async {
     if (menuByCategory.isEmpty) {
       final restored = await _restoreMenuFromCache(restaurantId, tableId);
       if (restored) notifyListeners();
@@ -39,10 +44,17 @@ class CustomerMenuProvider extends ChangeNotifier {
       isOfflineMode = false;
       lastUpdatedAt = DateTime.now();
       await _cacheMenu(restaurantId, tableId, data);
+      if (isBackground) notifyListeners();
     } on CustomerApiException catch (e) {
       if (e.isNetworkError && hasSavedData) {
         isOfflineMode = true;
         errorMessage = null;
+      } else if (e.statusCode == 403 &&
+          hasSavedData &&
+          e.message.toLowerCase().contains('accepting orders')) {
+        _setAcceptingOrders(false);
+        errorMessage = null;
+        if (isBackground) notifyListeners();
       } else {
         errorMessage = e.isNetworkError
             ? 'Menu is not available yet. Please ask staff to reconnect once.'
@@ -65,7 +77,8 @@ class CustomerMenuProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> fetchTruckMenu(String restaurantId, {bool isBackground = false}) async {
+  Future<void> fetchTruckMenu(String restaurantId,
+      {bool isBackground = false}) async {
     if (menuByCategory.isEmpty) {
       final restored = await _restoreMenuFromCache(restaurantId, 'truck');
       if (restored) notifyListeners();
@@ -86,10 +99,17 @@ class CustomerMenuProvider extends ChangeNotifier {
       isOfflineMode = false;
       lastUpdatedAt = DateTime.now();
       await _cacheMenu(restaurantId, 'truck', data);
+      if (isBackground) notifyListeners();
     } on CustomerApiException catch (e) {
       if (e.isNetworkError && hasSavedData) {
         isOfflineMode = true;
         errorMessage = null;
+      } else if (e.statusCode == 403 &&
+          hasSavedData &&
+          e.message.toLowerCase().contains('accepting orders')) {
+        _setAcceptingOrders(false);
+        errorMessage = null;
+        if (isBackground) notifyListeners();
       } else {
         errorMessage = e.message;
       }
@@ -124,6 +144,14 @@ class CustomerMenuProvider extends ChangeNotifier {
     categories = menuByCategory.keys.toList();
   }
 
+  void _setAcceptingOrders(bool value, {String? businessType}) {
+    if (restaurantInfo == null) return;
+    restaurantInfo = restaurantInfo!.copyWith(
+      isAcceptingOrders: value,
+      businessType: businessType,
+    );
+  }
+
   Future<void> _cacheMenu(
     String restaurantId,
     String tableId,
@@ -148,6 +176,69 @@ class CustomerMenuProvider extends ChangeNotifier {
 
   String _menuCacheKey(String restaurantId, String tableId) {
     return 'menu_${restaurantId}_$tableId';
+  }
+
+  void connectRealtime(String restaurantId, {String? tableId}) {
+    if (_socket != null &&
+        _socket!.connected &&
+        _socketRestaurantId == restaurantId &&
+        _socketTableId == tableId) {
+      return;
+    }
+
+    disconnectRealtime();
+    _socketRestaurantId = restaurantId;
+    _socketTableId = tableId;
+
+    _socket = io.io(
+      CustomerApiConfig.socketUrl,
+      io.OptionBuilder()
+          .setTransports(['websocket'])
+          .disableAutoConnect()
+          .build(),
+    );
+
+    _socket!.onConnect((_) {
+      _socket!.emit('join_restaurant', restaurantId);
+    });
+
+    _socket!.on('menu_updated', (_) {
+      if (tableId != null) {
+        fetchMenu(restaurantId, tableId, isBackground: true);
+      } else {
+        fetchTruckMenu(restaurantId, isBackground: true);
+      }
+    });
+
+    _socket!.on('availability_updated', (payload) {
+      if (payload is Map) {
+        _setAcceptingOrders(
+          payload['isAcceptingOrders'] == true,
+          businessType: payload['businessType'] as String?,
+        );
+        notifyListeners();
+      }
+      if (tableId != null) {
+        fetchMenu(restaurantId, tableId, isBackground: true);
+      } else {
+        fetchTruckMenu(restaurantId, isBackground: true);
+      }
+    });
+
+    _socket!.connect();
+  }
+
+  void disconnectRealtime() {
+    _socket?.disconnect();
+    _socket = null;
+    _socketRestaurantId = null;
+    _socketTableId = null;
+  }
+
+  @override
+  void dispose() {
+    disconnectRealtime();
+    super.dispose();
   }
 }
 

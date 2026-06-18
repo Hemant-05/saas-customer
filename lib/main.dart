@@ -37,6 +37,13 @@ final GoRouter _router = GoRouter(
       },
     ),
     GoRoute(
+      path: '/order/:restaurantId',
+      builder: (context, state) {
+        final restaurantId = state.pathParameters['restaurantId']!;
+        return MenuScreen(restaurantId: restaurantId);
+      },
+    ),
+    GoRoute(
       path: '/orders/:orderId',
       builder: (context, state) {
         final orderId = state.pathParameters['orderId']!;
@@ -55,7 +62,8 @@ void main() async {
   usePathUrlStrategy();
 
   try {
-    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+    await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform);
     await CustomerNotificationService().initialize();
   } catch (e) {
     debugPrint('[Main] Firebase/notification init failed (non-fatal): $e');
