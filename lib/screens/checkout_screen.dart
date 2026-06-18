@@ -25,7 +25,7 @@ class CheckoutScreen extends StatefulWidget {
 }
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
-  String _selectedPaymentMethod = 'pay_later';
+  final String _selectedPaymentMethod = 'pay_later';
   bool _isLoading = false;
   late Razorpay _razorpay;
 
@@ -141,7 +141,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     if (orderProv.placedOrderId != null) {
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(
-          builder: (_) => OrderTrackingScreen(orderId: orderProv.placedOrderId!),
+          builder: (_) =>
+              OrderTrackingScreen(orderId: orderProv.placedOrderId!),
         ),
         (route) => route.isFirst,
       );
@@ -229,7 +230,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ),
             const SizedBox(height: 24),
             const Text(
-              'Choose Payment Method',
+              'Payment',
               style: TextStyle(
                 color: AppColors.textPrimaryLight,
                 fontWeight: FontWeight.w700,
@@ -237,8 +238,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               ),
             ),
             const SizedBox(height: 12),
-            // Payment options
-            ..._buildPaymentOptions(),
+            _buildPaymentInfo(),
             const SizedBox(height: 32),
             // Confirm button
             SizedBox(
@@ -271,99 +271,44 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
-  List<Widget> _buildPaymentOptions() {
-    final options = [
-      (
-        'online',
-        'Pay Now — Online',
-        'UPI / Cards / Wallets',
-        Icons.phone_android_rounded,
-        const Color(0xFF6C63FF),
+  Widget _buildPaymentInfo() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFBE0B).withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(14),
+        border:
+            Border.all(color: const Color(0xFFFFBE0B).withValues(alpha: 0.35)),
       ),
-      (
-        'card',
-        'Pay Now — Card',
-        'Swipe card at the counter',
-        Icons.credit_card_rounded,
-        const Color(0xFF3A86FF),
-      ),
-      (
-        'pay_later',
-        'Pay After Eating',
-        'Pay when you\'re done with your meal',
-        Icons.schedule_rounded,
-        const Color(0xFFFFBE0B),
-      ),
-    ];
-
-    return options
-        .map(
-          (opt) => Padding(
-            padding: const EdgeInsets.only(bottom: 10),
-            child: GestureDetector(
-              onTap: () => setState(() => _selectedPaymentMethod = opt.$1),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: _selectedPaymentMethod == opt.$1
-                      ? opt.$5.withOpacity(0.12)
-                      : AppColors.surfaceLight,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: _selectedPaymentMethod == opt.$1
-                        ? opt.$5
-                        : AppColors.borderLight,
-                    width: _selectedPaymentMethod == opt.$1 ? 1.5 : 1,
+      child: const Row(
+        children: [
+          Icon(Icons.payments_rounded, color: Color(0xFFFFBE0B), size: 24),
+          SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Pay after order',
+                  style: TextStyle(
+                    color: AppColors.textPrimaryLight,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
                   ),
                 ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: opt.$5.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Icon(opt.$4, color: opt.$5, size: 22),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            opt.$2,
-                            style: const TextStyle(
-                              color: AppColors.textPrimaryLight,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 14,
-                            ),
-                          ),
-                          Text(
-                            opt.$3,
-                            style: const TextStyle(
-                              color: AppColors.textSecondaryLight,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Radio<String>(
-                      value: opt.$1,
-                      groupValue: _selectedPaymentMethod,
-                      onChanged: (v) =>
-                          setState(() => _selectedPaymentMethod = v!),
-                      activeColor: opt.$5,
-                    ),
-                  ],
+                Text(
+                  'The owner will collect and confirm payment.',
+                  style: TextStyle(
+                    color: AppColors.textSecondaryLight,
+                    fontSize: 12,
+                  ),
                 ),
-              ),
+              ],
             ),
           ),
-        )
-        .toList();
+        ],
+      ),
+    );
   }
 
   Widget _row(String label, String value, {bool highlight = false}) => Row(

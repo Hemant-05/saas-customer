@@ -21,6 +21,10 @@ class CartScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final latestRestaurantInfo =
+        context.watch<CustomerMenuProvider>().restaurantInfo ?? restaurantInfo;
+    final isAcceptingOrders = latestRestaurantInfo.isAcceptingOrders;
+
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
@@ -53,8 +57,8 @@ class CartScreen extends StatelessWidget {
                                   color: AppColors.textPrimaryLight,
                                   fontWeight: FontWeight.w700)),
                           content: const Text('Remove all items from cart?',
-                              style:
-                                  TextStyle(color: AppColors.textSecondaryLight)),
+                              style: TextStyle(
+                                  color: AppColors.textSecondaryLight)),
                           actions: [
                             TextButton(
                               onPressed: () => Navigator.pop(context),
@@ -129,19 +133,55 @@ class CartScreen extends StatelessWidget {
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   color: AppColors.surfaceLight,
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(24)),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.08),
+                      color: Colors.black.withValues(alpha: 0.08),
                       blurRadius: 20,
                     ),
                   ],
                 ),
                 child: Column(
                   children: [
-                    _summaryRow('Subtotal', '₹${cart.subtotal.toStringAsFixed(2)}'),
+                    if (!isAcceptingOrders) ...[
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color:
+                              const Color(0xFFFFB020).withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color:
+                                const Color(0xFFFFB020).withValues(alpha: 0.32),
+                          ),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.pause_circle_filled_rounded,
+                                color: Color(0xFFFFB020), size: 18),
+                            SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Ordering is paused right now.',
+                                style: TextStyle(
+                                  color: AppColors.textPrimaryLight,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                    ],
+                    _summaryRow(
+                        'Subtotal', '₹${cart.subtotal.toStringAsFixed(2)}'),
                     const SizedBox(height: 8),
-                    _summaryRow('Tax (5%)', '₹${cart.taxAmount.toStringAsFixed(2)}'),
+                    _summaryRow(
+                        'Tax (5%)', '₹${cart.taxAmount.toStringAsFixed(2)}'),
                     const Divider(color: AppColors.borderLight, height: 20),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -170,26 +210,32 @@ class CartScreen extends StatelessWidget {
                         width: double.infinity,
                         height: 56,
                         child: ElevatedButton(
-                          onPressed: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => CheckoutScreen(
-                                restaurantId: restaurantId,
-                                tableId: tableId,
-                                restaurantInfo: restaurantInfo,
-                                tableInfo: tableInfo,
-                              ),
-                            ),
-                          ),
+                          onPressed: isAcceptingOrders
+                              ? () => Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => CheckoutScreen(
+                                        restaurantId: restaurantId,
+                                        tableId: tableId,
+                                        restaurantInfo: latestRestaurantInfo,
+                                        tableInfo: tableInfo,
+                                      ),
+                                    ),
+                                  )
+                              : null,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFFF6B35),
+                            backgroundColor: isAcceptingOrders
+                                ? const Color(0xFFFF6B35)
+                                : const Color(0xFF94A3B8),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
                             ),
                           ),
-                          child: const Text(
-                            'Place Order',
-                            style: TextStyle(
+                          child: Text(
+                            isAcceptingOrders
+                                ? 'Place Order'
+                                : 'Ordering Paused',
+                            style: const TextStyle(
                               color: Colors.white,
                               fontSize: 17,
                               fontWeight: FontWeight.w700,
@@ -303,7 +349,8 @@ class _CartItemRow extends StatelessWidget {
                     GestureDetector(
                       onTap: () => cart.decreaseQuantity(cartItem.item.id),
                       child: const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                         child: Icon(Icons.remove_rounded,
                             color: Colors.white, size: 16),
                       ),
@@ -318,9 +365,10 @@ class _CartItemRow extends StatelessWidget {
                     GestureDetector(
                       onTap: () => cart.addItem(cartItem.item),
                       child: const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        child:
-                            Icon(Icons.add_rounded, color: Colors.white, size: 16),
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        child: Icon(Icons.add_rounded,
+                            color: Colors.white, size: 16),
                       ),
                     ),
                   ],
